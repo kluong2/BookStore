@@ -1,0 +1,26 @@
+{
+  "name": "bookstore",
+  "version": "1.0.0",
+  "description": "A sample bookstore project as a technical assessment.",
+  "main": "index.js",
+  "scripts": {
+    "test": "booktest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "kluong2"
+  },
+  "keywords": [
+    "book",
+    "bookstore"
+  ],
+  "author": "Kobe",
+  "license": "ISC",
+  "dependencies": {
+    "compression": "^1.7.4",
+    "dotenv": "^10.0.0",
+    "helmet": "^4.6.0",
+    "mongoose": "^6.1.1",
+    "multer": "^1.4.4"
+  }
+}
