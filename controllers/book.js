@@ -76,6 +76,9 @@ const newBook = (req, res, next) =>
                             {
                                 newBook.authors.push(author);//Push's author's ObjectID into the "authors" array.
                                 newBook.save();
+                                //The author's exact name is required when entering a book. 
+                                //Unfortunately, I do not believe Mongoose provides a way to un-require a field.
+                                //This means I must keep the "author" field and I cannot delete it.
                                 return res.status(201).json({message:"201: Book created!"});
                             }
                             else
