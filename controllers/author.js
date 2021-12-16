@@ -25,10 +25,9 @@ const getAllAuthors = (req, res, next) =>
 
 
 
-// newAuthor function for post book route
+// Route is '/author/new'
 const newAuthor = (req, res, next) => 
 {
-
     Author.findOne({id: req.body.id}, (err, data) =>
     {
         if(!data)
@@ -69,27 +68,17 @@ const newAuthor = (req, res, next) =>
 };
 
 
-//DELETE '/book'
-// const deleteAllBooks = (req, res, next) => {
-//     Book.deleteMany({}, err =>{
-//         if(err){
-//             return res.json({message: "Complete delete failed"});
-//         }
-//         return res.json({message: "Complete delete successful"});
 
-//     })
-// };
-
-
-
-//GET '/book/:name'
+//Route is '/author/search/:parameter/:filter'
 const getAuthor = (req, res, next) => 
 {
     let field = req.params.field;
     let filter = req.params.filter;
-    let regex = {$regex: filter.toLowerCase(), $options: 'i'};
+    let regex = {$regex: filter.toLowerCase(), $options: 'i'};//Regular expression for partial matches
     if(field == "name")
     {
+        //Best partial match will be first in the returned array.
+        //Other partial matches will be below.
         Author.find({name_lowercase: regex}, (err, data) => 
         {
             if(err || !data)
@@ -155,11 +144,7 @@ const getAuthor = (req, res, next) =>
 
 
 
-//POST '/book/:name'
-// const newComment = (req, res, next) => {
-//     res.json({message: "POST 1 book comment"});
-// };
-
+//Route is '/author/edit/:field/:replace'
 const editAuthor = (req, res, next) => 
 {
     let isbn = req.params.isbn;
@@ -167,6 +152,7 @@ const editAuthor = (req, res, next) =>
     let replace = req.params.replace;
     if(field == "name")
     {
+        //Search for author by exact ID so no other authors are affected.
         Author.findOneAndUpdate({id: id}, {name: replace, name_lowercase: replace.toLowerCase()}, (err, data) => {
             if(err || !data)
             {
@@ -199,15 +185,15 @@ const editAuthor = (req, res, next) =>
     }
 };
 
-//DELETE '/book/:name'
+//Route is '/delete/:filter'
 const deleteAuthor = (req, res, next) => 
 {
     let amount = req.params.amount;
     let field = req.params.field;
     let filter = req.params.filter;
-    //if(amount == "single" && field == "id")
-    //{
-        Author.deleteOne({isbn: filter}, (err, data) => 
+
+        //Search by exact ID so no other authors are affected.
+        Author.deleteOne({id: filter}, (err, data) => 
         {
             if(data.deletedCount == 0) 
             {
@@ -218,55 +204,13 @@ const deleteAuthor = (req, res, next) =>
 
             else return res.status(200).json({message: "200: Author deleted!"});
         })
-    //}
-
-    // if(amount == "many")
-    // {
-    //     if(field == "title")
-    //     {
-    //         Book.deleteMany({title_lower_case: filter.toLowerCase()}, (err, data) => {
-
-    //             if(data.deletedCount == 0) return res.json({message: "Book doesn't exist."});
-    
-    //             else if (err) return res.json(`Something went wrong. Please try again. ${err}`);
-    
-    //             else return res.json({message: "Book deleted."});
-    //         })
-    //     }
-    //     if(field == "year")
-    //     {
-    //         Book.deleteMany({year: filter}, (err, data) => {
-
-    //             if(data.deletedCount == 0) return res.json({message: "Book doesn't exist."});
-    
-    //             else if (err) return res.json(`Something went wrong. Please try again. ${err}`);
-    
-    //             else return res.json({message: "Book deleted."});
-    //         })
-    //     }
-    //     if(field == "author")
-    //     {
-    //         Book.deleteMany({author_lowercase: filter.toLowerCase}, (err, data) => {
-
-    //             if(data.deletedCount == 0) return res.json({message: "Book doesn't exist."});
-    
-    //             else if (err) return res.json(`Something went wrong. Please try again. ${err}`);
-    
-    //             else return res.json({message: "Book deleted."});
-    //         })
-    //     }
-    // }
-
-
 };
 
 //export controller functions
 module.exports = {
     getAllAuthors, 
     newAuthor,
-    //deleteAllBooks,
     getAuthor,
     editAuthor,
-    //newComment,
     deleteAuthor
 };

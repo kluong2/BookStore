@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config();//So we can keep our login info in a separate file for the .getignore file.
 const express = require("express");
 const mongoose = require('mongoose');
 const bookroute = require('./routes/book');

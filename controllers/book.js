@@ -1,16 +1,18 @@
 const Book = require('../models/book');
 const Author = require('../models/author');
 const { json } = require('express');
-//GET '/book'
-const getAllBooks = (req, res, next) => {
+
+//Return all books in the database. route is: /book/all
+const getAllBooks = (req, res, next) => 
+{
     Book.find({}, (err, data) =>{
         if(err)
         {
-            return res.status(500).json({message: "500: Internal server error!"});
+            return res.status(500).json({message: "500: Internal server error!"});//The .find() function should always return something, even if it's empty. If things go wrong, it's probably a server error.
         }
         else if(data.length == 0)
         {
-            return res.status(204).json({message: "204: No books to show!"});
+            return res.status(204).json({message: "204: No books to show!"});//.find() will always return something, even if it's empty. Not really an error. Just no content.
         }
         else
         {
@@ -19,13 +21,17 @@ const getAllBooks = (req, res, next) => {
     })
 };
 
-// newBook function for post book route
-const newBook = (req, res, next) => {
+// newBook function for post book route. route is: /book/new
+const newBook = (req, res, next) => 
+{
 
+    //Check if the book already exists by searching the database for its isbn.
     Book.findOne({isbn: req.body.isbn}, (err, data) =>{
         if(!data)
         {
-            //var author_id = "";
+            //Search for the exact author name that was entered in with the book data to see if the author exists.
+            //I am aware that two authors can have the same name, but it's extremely rare.
+            //I believe it's OK for this exercise. Entering in author ID can be a lot more tedious.
             Author.findOne({name_lowercase: req.body.author.toLowerCase()}, (err, data) => 
             {
                 if(err || !data)
@@ -34,21 +40,19 @@ const newBook = (req, res, next) => {
                 }
                 else if(data.length == 0)
                 {
-                    return res.status(204).json({message: "204: No authors to show!"})
+                    return res.status(404).json({message: "404: Author does not exist!"})
                 }
                 else
                 {
-                    //author_id = data.id;
-                    //console.log(author_id);
+                    //Create new data entry
                     const newBook = new Book({
                 
                         title: req.body.title,
                         title_lowercase: req.body.title.toLowerCase(),
                         year: req.body.year,
                         year_string: req.body.year.toString(),
-                        id: data.id,
-                        author: req.body.author,
-                        //author_lowercase: req.body.author.toLowerCase(),
+                        id: data.id,////Info needed for association with author. Will not be outputted in GET requests later.
+                        author: req.body.author,//Info needed for association with author. Will not be outputted in GET requests later.
                         isbn: req.body.isbn
                         
                     })
@@ -60,18 +64,17 @@ const newBook = (req, res, next) => {
                     }
                     else
                     {
-                        // return res.json(data);
+                        //This is for associating the author's information with the book.
+                        //The author's name is entered, and the author's id has been put into the newBook's data.
+                        //There is also an array in newBook's data that should be filled with a reference to the author's info.
+                        //This is so changes to the author's data can affect all their books at once. It's better than
+                        //making changes to both authors and books every time author gets updated.
                         Author.findOne({id: newBook.id}, (err, author) =>
                         {
                             
                             if(author)
                             {
-                                //author.books.push(newBook);
-                                newBook.authors.push(author);
-                                //author.save();
-                                //newBook.author.required = false;
-                                //newBook.author = undefined;
-                                //newBook.author_lowercase = undefined;
+                                newBook.authors.push(author);//Push's author's ObjectID into the "authors" array.
                                 newBook.save();
                                 return res.status(201).json({message:"201: Book created!"});
                             }
@@ -84,68 +87,6 @@ const newBook = (req, res, next) => {
                 });
                 }
             });
-            
-            //console.log("Hi");
-
-            // const newBook = new Book({
-                
-            //     title: req.body.title,
-            //     title_lowercase: req.body.title.toLowerCase(),
-            //     year: req.body.year,
-            //     year_string: req.body.year.toString(),
-            //     id: req.body.id,
-            //     author: req.body.author,
-            //     author_lowercase: req.body.author.toLowerCase(),
-            //     isbn: req.body.isbn
-
-            // })
-
-            
-
-            // newBook.save((err, data) =>{
-
-            //     if(err) return res.json({Error: err});
-            //     return res.json(data);
-
-            // })
-
-
-        //     newBook.save().then((result) => {
-
-        //         Author.findOne({id: newBook.id}, (err, author) =>{
-                    
-        //             if(author){
-        //                 author.books.push(newBook);
-        //                 author.save();
-        //                 res.json({message: 'Book created!'});
-        //             }
-                    
-        //     });
-        // })
-
-    //     newBook.save((err, data) => {
-
-    //         //  if(err) 
-    //         //  {
-    //         //  return res.json({Error: err});
-    //         //  }
-    //         // return res.json(data);
-    //         Author.findOne({id: newBook.id}, (err, author) =>{
-                
-    //             if(author){
-    //                 //author.books.push(newBook);
-    //                 newBook.authors.push(author);
-    //                 //author.save();
-    //                 newBook.save();
-    //                 res.json({message: 'Book created!'});
-    //             }
-                
-                
-    //     });
-    // });
-
-
-
         }
         else
         {
@@ -159,28 +100,20 @@ const newBook = (req, res, next) => {
 
 };
 
-
-//DELETE '/book'
-// const deleteAllBooks = (req, res, next) => {
-//     Book.deleteMany({}, err =>{
-//         if(err){
-//             return res.json({message: "Complete delete failed"});
-//         }
-//         return res.json({message: "Complete delete successful"});
-
-//     })
-// };
-
-
-
-//GET '/book/:name'
-const getBook = (req, res) => {
+//Find books with specific filters and parameters. Route is: /book/search/:parameter/:filter
+const getBook = (req, res) => 
+{
     let field = req.params.field;
     let filter = req.params.filter;
-    let regex = {$regex: filter.toLowerCase(), $options: 'i'};
+    let regex = {$regex: filter.toLowerCase(), $options: 'i'};//Regular expression for partial matches. I believe this is also case-insensitive, but I will use the lowercase fields just in case.
+
+    //Each parameter search has its own unique operations. If statements are required.
     if(field == "title")
     {
-        Book.find({title_lowercase: regex}, "title year authors isbn", (err, data) => {
+        //Using .find() with regex will bring up partial matches.
+        //Best partial match will be first in the JSON array.
+        Book.find({title_lowercase: regex}, "title year authors isbn", (err, data) => //Ouputs the title, year, authors, and isbn for a book. Remember that "authors" is an array.
+        {
             if(err || !data)
             {
                 return res.status(500).json({message: "500: Internal server error!"});
@@ -194,12 +127,13 @@ const getBook = (req, res) => {
             return res.status(200).json(data);
             }
 
-        }).populate("authors", "name dob");
+        }).populate("authors", "name dob");//This populates the "author's" array with the appropriate author info from the author data.
 
     }
     else if(field == "year")
     {
-        Book.find({year_string: regex}, "title year authors isbn", (err, data) => {
+        Book.find({year_string: regex}, "title year authors isbn", (err, data) => 
+        {
 
             if(err || !data)
             {
@@ -217,23 +151,16 @@ const getBook = (req, res) => {
         }).populate("authors", "name dob");
 
     }
-    // else if(field == "author")
-    // {
-    //     Book.find({author_lowercase: regex}, (err, data) => {
 
-    //         if(err || !data){
-    //             return res.json({message: "Author does not exist."})
-    //         }
-
-    //         else return res.json(data);
-
-    //     });
-
-    // }
+    //This is a bit more complicated than the other searches. Because you are
+    //searching by author's name and author's name can be updated from author info, 
+    //you cannot rely on the author name already stored with the book's data.
+    //You must search through author names in the author data, get their unique id,
+    //and use it to find the appropriate books associated with them.
     else if(field == "author")
     {
-        Author.find({name_lowercase: regex}, "id", (err, author) => {
-            
+        Author.find({name_lowercase: regex}, "id", (err, author) => 
+        {
             if(err || !author)
             {
                 return res.status(500).json({message: "500: Internal server error!"});
@@ -257,8 +184,11 @@ const getBook = (req, res) => {
                     }
                     else 
                     {
-                        //const books = [];
                         var books = [];
+                        //Find books associated with authors' ID and push them in
+                        //"books" array. I am aware that this is not really efficient
+                        //and that it's O(m * n), but .find() can be hard to work with
+                        //because it's an async function. There were also time constraints.
                         for(var i = 0; i < author.length; i++)
                         {
                             for(var j = 0; j < book.length; j++)
@@ -271,28 +201,16 @@ const getBook = (req, res) => {
                             }
                         }
                         
-                        //console.log(books);
-                        
                         for(var i = 0; i < books.length; i++)
                         {
+                            //No need for the author's ID anymore. Delete it.
                             books[i].id = undefined;
                         }
-                           
-                        //console.log(books);
+
                         return res.status(200).json(books);
                     }
         
                 }).populate("authors", "name dob");
-
-            //    Book.find({id: author[0].id}, (err, book) => {
-
-            //     if(err || !book){
-            //         return res.json({message: "Book doesn't exist."})
-            //     }
-    
-            //     else return res.json(book);
-    
-            // }).populate("authors", "name dob");
             }
         });
 
@@ -318,6 +236,8 @@ const getBook = (req, res) => {
 
     else if(field == "all")
     {
+        //The "$or" is so every single field can be searched and taken into account
+        //for partial matches.
         Book.find({$or:[{title_lowercase: regex}, {year: regex}, 
             {author_lowercase: regex}]}, "title year authors isbn", (err, data) => 
             {
@@ -340,14 +260,11 @@ const getBook = (req, res) => {
     }
 };
 
-
-
-//POST '/book/:name'
-// const newComment = (req, res, next) => {
-//     res.json({message: "POST 1 book comment"});
-// };
-
-const editBook = (req, res, next) => {
+//Update books. Route is /book/edit/:isbn/:field/:replace
+const editBook = (req, res, next) => 
+{
+    //Beter to search by isbn. Books can have the same name and year.
+    //Wouldn't want to update the wrong book.
     let isbn = req.params.isbn;
     let field = req.params.field;
     let replace = req.params.replace;
@@ -383,26 +300,20 @@ const editBook = (req, res, next) => {
     {
         return res.status(404).json({message: "404: Field does not exist!"})
     }
-    // if(field == "author")
-    // {
-    //     Book.findOneAndUpdate({isbn: isbn}, {author: replace, author_lowercase: replace.toLowerCase()}, (err, data) => {
-    //         if(err || !data){
-    //             return res.json({message: "Book doesn't exist."})
-    //         }
-
-    //         else return res.json(data);
-    //     })
-    // }
+    //Note that there is no way to edit the author because it's just useless data.
+    //The actual author info is referenced from the author collection, which is in the books'
+    //"authors" array, so you can just make changes to the author's info in the author
+    //collection.
 };
 
-//DELETE '/book/:name'
-const deleteBook = (req, res, next) => {
-    //let amount = req.params.amount;
-    //let field = req.params.field;
+//Route is book/delete/:isbn
+const deleteBook = (req, res, next) => 
+{
+    //Beter to search by isbn. Books can have the same name and year.
+    //Wouldn't want to delete the wrong book.
     let filter = req.params.filter;
-    //if(amount == "single" && field == "isbn")
-    //{
-        Book.deleteOne({isbn: filter}, (err, data) => {
+        Book.deleteOne({isbn: filter}, (err, data) => 
+        {
 
             if(data.deletedCount == 0) 
             {
@@ -412,60 +323,14 @@ const deleteBook = (req, res, next) => {
             else if (err) return res.status(400).json(`400: Something went wrong. Please try again. ${err}`);
 
             else return res.status(200).json({message: "200: Book deleted!"});
-        })
-    
-    //}
-
-    // if(amount == "many")
-    // {
-    //     if(field == "title")
-    //     {
-    //         Book.deleteMany({title_lower_case: filter.toLowerCase()}, (err, data) => {
-
-    //             if(data.deletedCount == 0) return res.json({message: "Book doesn't exist."});
-    
-    //             else if (err) return res.json(`Something went wrong. Please try again. ${err}`);
-    
-    //             else return res.json({message: "Book deleted."});
-    //         })
-    //     }
-    //     if(field == "year")
-    //     {
-    //         Book.deleteMany({year: filter}, (err, data) => {
-
-    //             if(data.deletedCount == 0) return res.json({message: "Book doesn't exist."});
-    
-    //             else if (err) return res.json(`Something went wrong. Please try again. ${err}`);
-    
-    //             else return res.json({message: "Book deleted."});
-    //         })
-    //     }
-    //     if(field == "author")
-    //     {
-    //         Book.deleteMany({author_lowercase: filter.toLowerCase}, (err, data) => {
-
-    //             if(data.deletedCount == 0) return res.json({message: "Book doesn't exist."});
-    
-    //             else if (err) return res.json(`Something went wrong. Please try again. ${err}`);
-    
-    //             else return res.json({message: "Book deleted."});
-    //         })
-    //     }
-    // }
-
-
-
-
-    
+        })  
 };
 
 //export controller functions
 module.exports = {
     getAllBooks, 
     newBook,
-    //deleteAllBooks,
     getBook,
     editBook,
-    //newComment,
     deleteBook
 };
