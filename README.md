@@ -12,6 +12,6 @@ Here are examples of what my book entries look like in MongoDB:
 
 
 
-Here are examples of the authors:
-![image](https://user-images.githubusercontent.com/70615539/146449016-fec7b27a-bffe-47b1-8a07-3ab68eea86aa.png)
+
+Here are examples of the authors: ![image](https://user-images.githubusercontent.com/70615539/146449016-fec7b27a-bffe-47b1-8a07-3ab68eea86aa.png)
 
