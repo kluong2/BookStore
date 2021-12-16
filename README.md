@@ -15,6 +15,6 @@ The authors have a one-to-many relationship with the books. Specifically, the bo
 
 
 Here is an example of what a GET request may look like in Postman:
-![image](https://user-images.githubusercontent.com/70615539/146456728-63f847c3-27f1-462a-97d5-b108b09bc794.png)
+![image](https://user-images.githubusercontent.com/70615539/146456808-eea1b20a-eda5-4774-abd5-aaf21cecad7a.png)
 
 
